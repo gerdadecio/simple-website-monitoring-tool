@@ -19,19 +19,25 @@ A simple, lightweight website monitoring application that displays the status of
 
 ## Quick Start
 
-### 1. Build the Docker Image
+### 1. Copy the sample config file and update accordingly
+
+```bash
+cp config.sample.json config.json
+```
+
+### 2. Build the Docker Image
 
 ```bash
 docker build -t website-monitor .
 ```
 
-### 2. Run the Container
+### 3. Run the Container
 
 ```bash
 docker run -d -p 8080:80 --name monitor website-monitor
 ```
 
-### 3. Access the Dashboard
+### 4. Access the Dashboard
 
 Open your browser and navigate to:
 
@@ -84,12 +90,12 @@ setInterval(loadStatus, 30000);  // Change 30000 to desired milliseconds
 .
 ├── Dockerfile              # Docker configuration
 ├── .dockerignore          # Docker ignore file
+├── config.json            # Config file for the monitoring page
+├── config.sample.json     # Sample config file for the monitoring page
 ├── index.html             # Main dashboard HTML
 ├── check_status.sh        # Status checking script
 ├── start.sh               # Container startup script
 ├── README.md              # This file
-├── plan.md                # Implementation plan
-└── todo.md                # Task tracking
 ```
 
 ## How It Works
