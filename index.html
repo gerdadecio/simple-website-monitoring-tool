@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NSL Links</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background-color: #2b2b2b;
+            color: #e0e0e0;
+            padding: 25px;
+        }
+
+        h1 {
+            color: #e0e0e0;
+            margin-bottom: 20px;
+            font-size: 32px;
+            font-weight: normal;
+        }
+
+        #controls {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #refresh-btn {
+            padding: 6px 12px;
+            background-color: #4a4a4a;
+            color: #e0e0e0;
+            border: 1px solid #5a5a5a;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        #refresh-btn:hover {
+            background-color: #555555;
+        }
+
+        #refresh-btn:disabled {
+            background-color: #3a3a3a;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        #last-updated {
+            color: #999;
+            font-size: 13px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #3a3a3a;
+            border: 1px solid #555;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #555;
+            vertical-align: top;
+        }
+
+        th {
+            background-color: #4a4a4a;
+            color: #e0e0e0;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        td {
+            background-color: #3a3a3a;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+
+        /* First column styling */
+        td:first-child {
+            font-weight: normal;
+            color: #c0c0c0;
+            width: 120px;
+        }
+
+        /* Link styling */
+        a {
+            color: #6b9ce8;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Version number styling */
+        .version {
+            color: #d4a056;
+            font-weight: normal;
+        }
+
+        /* Status check mark */
+        .status-check {
+            color: #90ee90;
+            margin-left: 5px;
+        }
+
+        .status-error {
+            color: #ff6b6b;
+            margin-left: 5px;
+        }
+
+        /* Cell content layout */
+        .cell-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 13px;
+        }
+
+        .cell-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .separator {
+            color: #888;
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <h1>NSL Links</h1>
+
+    <div id="controls">
+        <button id="refresh-btn" onclick="loadStatus()">Refresh Now</button>
+        <span id="last-updated">Last updated: Never</span>
+    </div>
+
+    <table id="status-table">
+        <thead>
+            <tr>
+                <th></th>
+                <th>Prod</th>
+            </tr>
+        </thead>
+        <tbody id="status-tbody">
+            <tr>
+                <td colspan="2" class="loading">Loading...</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        // Function to load and apply config
+        function loadConfig() {
+            fetch('/config.json')
+                .then(response => response.json())
+                .then(config => {
+                    if (config.title) {
+                        document.querySelector('h1').textContent = config.title;
+                        document.title = config.title;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading config:', error);
+                });
+        }
+
+        // Function to update the "Last Updated" timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            const timeString = now.toLocaleString();
+            document.getElementById('last-updated').textContent = 'Last updated: ' + timeString;
+        }
+
+        // Function to create cell content
+        function createCellContent(endpoint) {
+            const div = document.createElement('div');
+            div.className = 'cell-content';
+
+            // Line 1: Editor status | sign in | ping | v: version
+            const line1 = document.createElement('div');
+            line1.className = 'cell-line';
+
+            // Editor link with status
+            const editorLink = document.createElement('a');
+            editorLink.href = endpoint.url;
+            editorLink.textContent = 'Editor';
+            editorLink.target = '_blank';
+            line1.appendChild(editorLink);
+
+            // Status check mark
+            const statusCheck = document.createElement('span');
+            const statusCode = parseInt(endpoint.status_code);
+            if (statusCode >= 200 && statusCode < 300) {
+                statusCheck.textContent = '✓';
+                statusCheck.className = 'status-check';
+            } else {
+                statusCheck.textContent = '✗';
+                statusCheck.className = 'status-error';
+            }
+            line1.appendChild(statusCheck);
+
+            // Separator
+            line1.appendChild(document.createTextNode(' | '));
+
+            // Sign in link
+            if (endpoint.login_url) {
+                const signInLink = document.createElement('a');
+                signInLink.href = endpoint.login_url;
+                signInLink.textContent = 'sign in';
+                signInLink.target = '_blank';
+                line1.appendChild(signInLink);
+                line1.appendChild(document.createTextNode(' | '));
+            }
+
+            // Ping link
+            const pingLink = document.createElement('a');
+            pingLink.href = endpoint.url + '/ping';
+            pingLink.textContent = 'ping';
+            pingLink.target = '_blank';
+            line1.appendChild(pingLink);
+
+            // Version
+            if (endpoint.version && endpoint.version !== 'N/A') {
+                line1.appendChild(document.createTextNode(' | '));
+                line1.appendChild(document.createTextNode('v: '));
+                const versionSpan = document.createElement('span');
+                versionSpan.className = 'version';
+                versionSpan.textContent = endpoint.version;
+                line1.appendChild(versionSpan);
+            }
+
+            div.appendChild(line1);
+
+            // Line 2: Services link
+            if (endpoint.home_url) {
+                const line2 = document.createElement('div');
+                line2.className = 'cell-line';
+                const servicesLink = document.createElement('a');
+                servicesLink.href = endpoint.home_url;
+                servicesLink.textContent = 'Services';
+                servicesLink.target = '_blank';
+                line2.appendChild(servicesLink);
+                div.appendChild(line2);
+            }
+
+            return div;
+        }
+
+        // Function to load status data from JSON file
+        function loadStatus() {
+            // Show loading state
+            const refreshBtn = document.getElementById('refresh-btn');
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = 'Loading...';
+
+            fetch('/status.json')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to load status data');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const tbody = document.getElementById('status-tbody');
+
+                    // Clear existing rows
+                    tbody.innerHTML = '';
+
+                    // Check if we have data
+                    if (!data || data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="2" class="loading">No data available</td></tr>';
+                        return;
+                    }
+
+                    // Create a row for each endpoint
+                    data.forEach(endpoint => {
+                        const row = document.createElement('tr');
+
+                        // Name cell
+                        const nameCell = document.createElement('td');
+                        nameCell.textContent = endpoint.name || 'Unknown';
+                        row.appendChild(nameCell);
+
+                        // Prod cell (for now, we'll just show one environment)
+                        const prodCell = document.createElement('td');
+                        prodCell.appendChild(createCellContent(endpoint));
+                        row.appendChild(prodCell);
+
+                        // Append row to tbody
+                        tbody.appendChild(row);
+                    });
+
+                    // Update the last updated timestamp
+                    updateTimestamp();
+                })
+                .catch(error => {
+                    console.error('Error loading status:', error);
+                    const tbody = document.getElementById('status-tbody');
+                    tbody.innerHTML = '<tr><td colspan="2" class="loading">Error loading data. Please ensure the monitoring script is running.</td></tr>';
+                })
+                .finally(() => {
+                    // Re-enable refresh button
+                    refreshBtn.disabled = false;
+                    refreshBtn.textContent = 'Refresh Now';
+                });
+        }
+
+        // Load status when page loads
+        window.addEventListener('load', function() {
+            loadConfig();
+            loadStatus();
+
+            // Set up auto-refresh every 30 seconds
+            setInterval(loadStatus, 30000);
+        });
+    </script>
+</body>
+</html>

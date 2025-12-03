@@ -1,0 +1,15 @@
+{
+  "title": "My Website Links",
+  "endpoints": [
+    {
+      "name": "Sample Website",
+      "baseUrl": "https://gerdadecio.com",
+      "pingEndpoint": "/some/ping",
+      "versionEndpoint": "/some/version",
+      "loginEndpoint": "/sign_in",
+      "homeEndpoint": "/home"
+    }
+  ],
+  "checkIntervalSeconds": 60,
+  "requestTimeoutSeconds": 20
+}
